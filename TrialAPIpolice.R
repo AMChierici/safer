@@ -1,14 +1,21 @@
 #### Try to fetch data from the Police API #####
 # https://data.police.uk/docs/method/crime-street/
 # http://postcodes.io/
+# https://getaddress.io/
 
-# install.packages('jsonlite')
-# install.packages('curl', dependencies = TRUE)
+# uncomment and run if you don't have the libraries installed
+# install.packages('jsonlite', dependencies = TRUE)
 # install.packages('sp', dependencies = TRUE)
 # install.packages('reshape2', dependencies = TRUE)
+# install.packages('data.table', dependencies = TRUE)
+# install.packages('ggplot2', dependencies = TRUE)
+# install.packages('tidyr', dependencies = TRUE)
 library(jsonlite)
 # library(sp) #not used for now
 library(reshape2)
+library(data.table)
+library(tidyr)
+library(ggplot2)
 source("functions.R")
 
 #save poscode to search and its long and lat - later autocomplete address to find out how many households are there.
@@ -46,24 +53,38 @@ CrimeStats250mHex <- fromJSON(paste0(
   "2015-04"
 ))
 
-table(CrimeStats250mHex$category)
+melt(table(CrimeStats250mHex$category))
 
 # loop through date to pick 1 yr of data
-tmp <- NULL
-for(i in c("2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04")){
-  
-  i <- "2014-05"
-  tmp <- table(fromJSON(paste0(
-    "https://data.police.uk/api/crimes-street/all-crime?poly=",
-    paste0(p1[1], ",", p1[2], ":", p2[1], ",", p2[2], ":", p3[1], ",", p3[2], ":", p4[1], ",", p4[2], ":", p5[1], ",", p5[2], ":", p6[1], ",", p6[2]),
-    "&date=", #default to past month, use this to specify date
-    i
-  ))$category)
-  melt(tmp)
-  ### think about it...
+res <- NULL
+CrimeOneYr <- data.table(Var1=melt(table(CrimeStats250mHex$category))$Var1)
+setkey(CrimeOneYr, Var1)
+dates <- c("2014-05", "2014-06", "2014-07", "2014-08", "2014-09", "2014-10", "2014-11", "2014-12", "2015-01", "2015-02", "2015-03", "2015-04")
+
+for(i in dates){
+  # i <- "2014-07"
+  res <- data.table(melt(
+    table(fromJSON(paste0(
+      "https://data.police.uk/api/crimes-street/all-crime?poly=",
+      paste0(p1[1], ",", p1[2], ":", p2[1], ",", p2[2], ":", p3[1], ",", p3[2], ":", p4[1], ",", p4[2], ":", p5[1], ",", p5[2], ":", p6[1], ",", p6[2]),
+      "&date=", #default to past month, use this to specify date
+      i))$category)
+  ))
+  setkey(res, Var1)
+  CrimeOneYr <- res[CrimeOneYr]
 }
 
+setnames(CrimeOneYr, names(CrimeOneYr), c("crime_type", gsub("-", "_", dates)))
+CrimeOneYr
 
+PlotCrime <- gather(CrimeOneYr, year_month, count, -crime_type)
+qplot(year_month, count, data=PlotCrime, geom = "histogram", stat='identity', fill=crime_type)
+
+# count households
+PostcodeLookup <- fromJSON(paste0("https://api.getAddress.io/uk/", EnterPostcode, "?api-key=rJ_3SHdESkGtyVcY5dl3GQ794")) # JSON not good, perhaps the API does not give JSON, read doc and try with curl package...
+  
+  
+  
 ## trials.. ##
 # SpecPoint <- fromJSON("https://data.police.uk/api/crimes-street/all-crime?lat=52.629729&lng=-1.131592&date=2013-01")
 # SpecPoint$category[1:10]
