@@ -52,7 +52,7 @@ ui <- fluidPage(
         # Define the sidebar with one input
         sidebarPanel(
           numericInput("p", "Prob. of event occurring", 1/6),
-          numericInput("n", "o. of insured", 10),
+          numericInput("n", "No. of insured", 10),
           numericInput('S', 'Insured sum', 600),
           helpText("The red line would be the individual PRM if people self-insured themselves")
       ),
