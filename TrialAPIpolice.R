@@ -22,7 +22,7 @@ library(XML)
 source("functions.R")
 
 #save poscode to search and its long and lat - later autocomplete address to find out how many households are there.
-EnterPostcode <- "E1 3FE"
+EnterPostcode <- "BT1 2LB"
 
 PostcodeInfo <- fromJSON(paste0("https://api.postcodes.io/postcodes/", EnterPostcode))
 Ox <- PostcodeInfo$result$latitude
@@ -86,11 +86,14 @@ CrimeOneYr
 PlotCrime <- gather(CrimeOneYr, year_month, count, -crime_type)
 qplot(year_month, count, data=PlotCrime, geom = "histogram", stat='identity', fill=crime_type)
 
+EnterPostcode <- "BT1 1GJ"
 # count households
 PostcodeLookup <- fromJSON(URLencode(paste0("https://api.getAddress.io/uk/", EnterPostcode, "?api-key=rJ_3SHdESkGtyVcY5dl3GQ794")))
 
-PostcodeLookup
+head(PostcodeLookup)
+
 No_households_in_postcode <- length(PostcodeLookup$Addresses)
+No_households_in_postcode
 
   ## trials.. ##
 # SpecPoint <- fromJSON("https://data.police.uk/api/crimes-street/all-crime?lat=52.629729&lng=-1.131592&date=2013-01")
