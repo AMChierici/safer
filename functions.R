@@ -31,6 +31,14 @@ calcLatLong <- function(lat, longitude, distance, bearing=0){
 # Calc crime stats for hexagon --------------------------------------------
 
 hexCrimeStats <- function(Ox, Oy, d, categories=c("anti-social-behaviour", "bicycle-theft", "burglary", "criminal-damage-arson", "drugs", "other-theft", "possession-of-weapons", "public-order", "robbery", "shoplifting", "theft-from-the-person", "vehicle-crime", "violent-crime", "other-crime")){
+  library(jsonlite)
+  # library(sp) #not used for now
+  library(reshape2)
+  library(data.table)
+  library(tidyr)
+  library(ggplot2)
+  library(RCurl)
+  library(XML)
   # d <- 250 #in metres
   p1 <- calcLatLong(Ox, Oy, d, 0)
   p2 <- calcLatLong(Ox, Oy, d, 60)
@@ -49,3 +57,34 @@ hexCrimeStats <- function(Ox, Oy, d, categories=c("anti-social-behaviour", "bicy
   
   melt(table(CrimeStats$category))
 }
+
+
+postcodecrime <- function(postcode){
+  library(jsonlite)
+  library(reshape2)
+  library(data.table)
+  library(tidyr)
+  library(ggplot2)
+  library(RCurl)
+  library(XML)
+  # EnterPostcode <- "E1 3FE"
+  d <- 200
+  # count households
+  PostcodeLookup <- fromJSON(URLencode(paste0("https://api.getAddress.io/uk/", EnterPostcode, "?api-key=rJ_3SHdESkGtyVcY5dl3GQ794")))
+  No_households_in_postcode <- length(PostcodeLookup$Addresses)
+  PostcodeInfo <- fromJSON(paste0("https://api.postcodes.io/postcodes/", EnterPostcode))
+  Ox <- PostcodeInfo$result$latitude
+  Oy <- PostcodeInfo$result$longitude
+  res <- hexCrimeStats(Ox, Oy, d)
+  res$prob <- res$value/No_households_in_postcode 
+  res$event_per_household_per_year <- paste0(ceiling(12*res$value/No_households_in_postcode), " times per year")
+  names(res)[1:2] <- c("crime_type", "count_last_month")
+  
+  # population[postcode==EnterPostcode]
+  # as.numeric(population[postcode==EnterPostcode, population]) #for estimated population (in 2011?)
+  
+  
+  return(res)
+  
+}
+
