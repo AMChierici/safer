@@ -59,7 +59,7 @@ hexCrimeStats <- function(Ox, Oy, d, categories=c("anti-social-behaviour", "bicy
 }
 
 
-postcodecrime <- function(postcode){
+postcodecrime <- function(EnterPostcode){
   library(jsonlite)
   library(reshape2)
   library(data.table)
